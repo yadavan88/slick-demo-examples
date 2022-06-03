@@ -1,6 +1,8 @@
 package com.yadavan88
 
 import scala.concurrent.Future
+import slick.jdbc.GetResult
+import java.time.LocalDate
 
 object QueryOperations {
   val db = Connection.db
@@ -11,6 +13,12 @@ object QueryOperations {
   }
   def findMovieByName(name: String): Future[Option[Movie]] = {
     db.run(SlickTables.movieTable.filter(_.name === name).result.headOption)
+  }
+
+  def getAllMoviesByPlainQuery: Future[Seq[Movie]] = {
+    implicit val getResultMovie = GetResult(r => Movie(r.<<, r.<<, LocalDate.parse(r.nextString()), r.<<)) 
+    val moviesQuery = sql"""SELECT * FROM public."Movie" """.as[Movie]
+    db.run(moviesQuery)
   }
 
   // todo: check the return id
@@ -39,6 +47,14 @@ object QueryOperations {
 
   def deleteMovie(movieId: Long): Future[Int] = {
     db.run(SlickTables.movieTable.filter(_.id === movieId).delete)
+  }
+
+  def insertStreamingProviders(providers: Seq[StreamingProviderMapping]): Future[Option[Int]] = {
+    db.run(SlickTables.streamingProviderMappingTable ++= providers)
+  }
+
+  def getStreamingProviders(movieId: Long): Future[Seq[StreamingProviderMapping]] = {
+    db.run(SlickTables.streamingProviderMappingTable.filter(_.movieId === movieId).result)
   }
 
   import SlickTables._

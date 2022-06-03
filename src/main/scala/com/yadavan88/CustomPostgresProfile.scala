@@ -7,7 +7,7 @@ import com.github.tminglei.slickpg.geom.PgPostGISExtensions
 trait CustomPostgresProfile
     extends ExPostgresProfile
     with PgJsonSupport
-    with PgPostGISSupport
+    with PgArraySupport
     with PgHStoreSupport
     with PgDate2Support {
   def pgjson = "jsonb"
@@ -19,8 +19,11 @@ trait CustomPostgresProfile
       extends API
       with JsonImplicits
       with HStoreImplicits
-      with DateTimeImplicits
-      with PostGISImplicits {}
+      with ArrayImplicits
+      with DateTimeImplicits {
+    implicit val strListTypeMapper = new SimpleArrayJdbcType[String]("text").to(_.toList)
+
+  }
 
 }
 

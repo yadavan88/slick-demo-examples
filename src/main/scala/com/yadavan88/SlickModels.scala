@@ -3,7 +3,7 @@ package com.yadavan88
 import java.time.LocalDate
 import slick.lifted.Tag
 import slick.jdbc.PostgresProfile
-import com.vividsolutions.jts.geom.Geometry
+import slick.lifted.ProvenShape
 //import slick.jdbc.PostgresProfile.api._
 
 final case class Movie(
@@ -14,15 +14,22 @@ final case class Movie(
 )
 final case class Actor(id: Long, name: String)
 final case class MovieActorMapping(id: Long, movieId: Long, actorId: Long)
-final case class GeoLocation(id: Long, geoLocation: Geometry)
 
-final case class GeoFencedMovie(
+object StreamingProvider extends Enumeration {
+  type StreamingProviders = Value
+  val Netflix = Value("Netflix")
+  val Hulu = Value("Hulu")
+  val Disney = Value("Disney")
+  val Prime = Value("Prime")
+}
+
+final case class StreamingProviderMapping(
     id: Long,
-    name: String,
-    releaseDate: LocalDate,
-    lengthInMin: Int,
-    allowedGeo: Option[Geometry]
+    movieId: Long,
+    streamingProvider: StreamingProvider.StreamingProviders
 )
+
+final case class MovieLocations(id: Long, movieId: Long, locations: List[String])
 
 class SlickTablesGeneric(val profile: PostgresProfile) {
   import profile.api._
@@ -54,8 +61,29 @@ class SlickTablesGeneric(val profile: PostgresProfile) {
 
   lazy val movieActorMappingTable = TableQuery[MovieActorMappingTable]
 
-  val ddl: profile.DDL =
-    Seq(movieTable, actorTable, movieActorMappingTable).map(_.schema).reduce(_ ++ _)
+  class StreamingProviderMappingTable(tag: Tag)
+      extends Table[StreamingProviderMapping](tag, "StreamingProviderMapping") {
+
+    implicit val providerMapper =
+      MappedColumnType.base[StreamingProvider.StreamingProviders, String](
+        e => e.toString,
+        s => StreamingProvider.withName(s)
+      )
+
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def movieId = column[Long]("movie_id")
+    def streamingProvider = column[StreamingProvider.StreamingProviders]("streaming_provider")
+    override def * =
+      (
+        id,
+        movieId,
+        streamingProvider
+      ) <> (StreamingProviderMapping.tupled, StreamingProviderMapping.unapply)
+  }
+  lazy val streamingProviderMappingTable = TableQuery[StreamingProviderMappingTable]
+
+  val tables = Seq(movieTable, actorTable, movieActorMappingTable, streamingProviderMappingTable)
+  val ddl: profile.DDL = tables.map(_.schema).reduce(_ ++ _)
 
 }
 
@@ -64,31 +92,21 @@ object SlickTables extends SlickTablesGeneric(PostgresProfile)
 object SpecialTables {
   val api = CustomPostgresProfile.api
   import api._
-  class GeoFencedMovieTable(tag: Tag) extends Table[GeoFencedMovie](tag, "GeoFencedMovie") {
-    def id = column[Long]("geo_movie_id", O.PrimaryKey, O.SqlType("BIGSERIAL"))
-    def name = column[String]("name")
-    def releaseDate = column[LocalDate]("release_date")
-    def lengthInMin = column[Int]("length_in_min")
-    def geoLocation = column[Option[Geometry]]("geo_location")
-    // format: off
-    override def * = (id, name, releaseDate, lengthInMin, geoLocation) <> (GeoFencedMovie.tupled, GeoFencedMovie.unapply)
-    // format: on
+
+  class MovieLocationsTable(tag: Tag) extends Table[MovieLocations](tag, "MovieLocations") {
+
+    def id = column[Long]("movie_location_id", O.PrimaryKey, O.AutoInc)
+    def movieId = column[Long]("movie_id")
+    def locations = column[List[String]]("locations", O.SqlType("varchar []"))
+
+    override def * = (id, movieId, locations) <> (MovieLocations.tupled, MovieLocations.unapply)
+
   }
-  lazy val geoFencedMovieTable = TableQuery[GeoFencedMovieTable]
+  lazy val movieLocationsTable = TableQuery[MovieLocationsTable]
 
-  val ddl = Seq(geoFencedMovieTable).map(_.schema).reduce(_ ++ _)
-
-  // class GeoLocationTable(tag: Tag) extends Table[GeoLocation](tag, "GeoLocation") {
-  //   def id = column[Long]("movie_actor_id", O.PrimaryKey, O.AutoInc)
-  //   def geoLocation = column[Geometry]("geo_location")
-  //   override def * = (id, geoLocation) <> (GeoLocation.tupled, GeoLocation.unapply)
-  // }
+  val specialtables = Seq(movieLocationsTable)
+  val ddl = specialtables.map(_.schema).reduce(_ ++ _)
 }
 
 //docker run --name postgresql -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=admin -p 5432:5432 -d postgres
 //docker run --name postgresql -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=admin -p 5432:5432 -d postgis/postgis
-
-object Main extends App {
-  val ddlQueries = SlickTables.ddl.createIfNotExistsStatements.mkString(";\n")
-  println(ddlQueries)
-}
