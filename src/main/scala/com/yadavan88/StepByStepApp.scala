@@ -8,11 +8,13 @@ import slick.jdbc.SQLActionBuilder
 import slick.jdbc.SetParameter
 import FutureLogger._
 import MyExecContext._
+import scala.concurrent.Await
+import scala.concurrent.duration._
 object StepByStepApp extends App {
 
   import SlickTables.profile.api._
 
-  for {
+  val res = for {
     _ <- DataSetup.initSetup
     _ <- QueryOperations.getAllMoviesByPlainQuery.debug
     _ <- DataSetup.advancedSetUp.logError
@@ -21,8 +23,12 @@ object StepByStepApp extends App {
     _ <- SpecialOperations.saveMovieLocations(DataSetup.shawshankLocation).debug
     _ <- SpecialOperations.saveMovieLocations(DataSetup.starTrekLocation).debug
     _ <- SpecialOperations.getMoviesByLocation("Ashland").debug
-
+    _ <- SpecialOperations.getMoviesFilmedInLocations(List("Ashland", "Paramount Studios")).debug
+    _ <- SpecialOperations.saveMovieProperties(DataSetup.starTrekProperties)
+    _ <- SpecialOperations.saveMovieProperties(DataSetup.shawshankProperties)
+    _ <- SpecialOperations.getMoviesByDistributor("Columbia Pictures").debug
+    _ = println("all done.... ")
   } yield ()
 
-  Thread.sleep(10000)
+  Await.result(res, 5.seconds)
 }

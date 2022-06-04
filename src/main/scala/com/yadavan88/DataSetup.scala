@@ -11,7 +11,7 @@ import scala.concurrent.ExecutionContext
 import java.util.concurrent.Executors
 
 object MyExecContext {
-  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(8))
+  implicit val ec = ExecutionContext.fromExecutor(Executors.newWorkStealingPool(4))
 }
 
 object DataSetup {
@@ -30,17 +30,18 @@ object DataSetup {
     Connection.db.run(DBIO.sequence(SpecialTables.specialtables.map(_.delete)))
   }
 
+  val shawshank = Movie(1L, "Shawshank Redemptions", LocalDate.of(1994, 4, 2), 162)
+  val starTrekWrath = Movie(2L, "Star Trek Wrath Of Khan", LocalDate.of(1986, 6, 1), 131)
+
+  val shatner = Actor(1L, "Willian Shatner")
+  val nemoy = Actor(2L, "Leonard Nemoy")
+  val nichols = Actor(3L, "Nichelle Nichols")
+  val freeman = Actor(4L, "Morgan Freeman")
+  val actors = Seq(shatner, nemoy, nichols, freeman)
+
   def initSetup = {
 
-    val shawshank = Movie(1L, "Shawshank Redemptions", LocalDate.of(1994, 4, 2), 162)
-    val starTrekWrath = Movie(2L, "Star Trek Wrath Of Khan", LocalDate.of(1986, 6, 1), 131)
     val movies = Seq(shawshank, starTrekWrath)
-
-    val shatner = Actor(1L, "Willian Shatner")
-    val nemoy = Actor(2L, "Leonard Nemoy")
-    val nichols = Actor(3L, "Nichelle Nichols")
-    val freeman = Actor(4L, "Morgan Freeman")
-    val actors = Seq(shatner, nemoy, nichols, freeman)
 
     val mappings = Seq(
       MovieActorMapping(0L, shawshank.id, freeman.id),
@@ -58,7 +59,9 @@ object DataSetup {
 
     // an empty database "movies" should exist before these queries are run
 
-    println("Make sure that the database and tables are already created1")
+    // println(SlickTables.ddl.createIfNotExistsStatements.mkString(";\n"))
+    // println(SpecialTables.ddl.createIfNotExistsStatements.mkString(";\n"))
+    println("Make sure that the database and tables are already created")
     for {
       _ <- deleteData
       _ <- QueryOperations.forceInsertMovies(movies)
@@ -74,7 +77,20 @@ object DataSetup {
     Future.unit
   }
 
-  val shawshankLocation = MovieLocations(0L, 1L, List("Ashland", "Virginia Island"))
-  val starTrekLocation = MovieLocations(0L, 2L, List("Golden Gate Park", "Paramount Studios"))
+  val shawshankLocation = MovieLocations(0L, shawshank.id, List("Ashland", "Virginia Island"))
+  val starTrekLocation =
+    MovieLocations(0L, starTrekWrath.id, List("Golden Gate Park", "Paramount Studios"))
+
+  val starTrekPropMap = Map(
+    "production" -> "Paramount Pictures",
+    "distributor" -> "Paramount Pictures",
+    "specialEffects" -> "Stargate",
+    "aspectRatio" -> "2.20:1"
+  )
+  val shawshankMap = Map(
+    "distributor" -> "Columbia Pictures"
+  )
+  val starTrekProperties = MovieProperties(0L, starTrekWrath.id, starTrekPropMap)
+  val shawshankProperties = MovieProperties(0L, shawshank.id, shawshankMap)
 
 }

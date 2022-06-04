@@ -30,6 +30,7 @@ final case class StreamingProviderMapping(
 )
 
 final case class MovieLocations(id: Long, movieId: Long, locations: List[String])
+final case class MovieProperties(id: Long, movieId: Long, properties: Map[String, String])
 
 class SlickTablesGeneric(val profile: PostgresProfile) {
   import profile.api._
@@ -97,14 +98,22 @@ object SpecialTables {
 
     def id = column[Long]("movie_location_id", O.PrimaryKey, O.AutoInc)
     def movieId = column[Long]("movie_id")
-    def locations = column[List[String]]("locations", O.SqlType("varchar []"))
-
+    def locations = column[List[String]]("locations")
     override def * = (id, movieId, locations) <> (MovieLocations.tupled, MovieLocations.unapply)
 
   }
   lazy val movieLocationsTable = TableQuery[MovieLocationsTable]
 
-  val specialtables = Seq(movieLocationsTable)
+  class MoviePropertiesTable(tag: Tag) extends Table[MovieProperties](tag, "MovieProperties") {
+
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc, O.SqlType("bigserial"))
+    def movieId = column[Long]("movie_id")
+    def properties = column[Map[String, String]]("properties", O.SqlType("hstore"))
+    def * = (id, movieId, properties) <> (MovieProperties.tupled, MovieProperties.unapply)
+  }
+  lazy val moviePropertiesTable = TableQuery[MoviePropertiesTable]
+
+  val specialtables = Seq(movieLocationsTable, moviePropertiesTable)
   val ddl = specialtables.map(_.schema).reduce(_ ++ _)
 }
 
