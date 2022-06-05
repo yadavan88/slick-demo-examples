@@ -5,6 +5,7 @@ import slick.lifted.Tag
 import slick.jdbc.PostgresProfile
 import slick.lifted.ProvenShape
 //import slick.jdbc.PostgresProfile.api._
+import play.api.libs.json._
 
 final case class Movie(
     id: Long,
@@ -31,6 +32,7 @@ final case class StreamingProviderMapping(
 
 final case class MovieLocations(id: Long, movieId: Long, locations: List[String])
 final case class MovieProperties(id: Long, movieId: Long, properties: Map[String, String])
+final case class ActorDetails(id: Long, actorId: Long, personalDetails: JsValue) 
 
 class SlickTablesGeneric(val profile: PostgresProfile) {
   import profile.api._
@@ -113,7 +115,17 @@ object SpecialTables {
   }
   lazy val moviePropertiesTable = TableQuery[MoviePropertiesTable]
 
-  val specialtables = Seq(movieLocationsTable, moviePropertiesTable)
+  class ActorDetailsTable(tag: Tag) extends  Table[ActorDetails](tag, "ActorDetails") {
+
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc, O.SqlType("bigserial"))
+    def actorId = column[Long]("actor_id")
+    def personal = column[JsValue]("personal_info")
+
+    def * = (id, actorId, personal)<>(ActorDetails.tupled, ActorDetails.unapply)
+  }
+  lazy val actorDetailsTable = TableQuery[ActorDetailsTable]
+
+  val specialtables = Seq(movieLocationsTable, moviePropertiesTable, actorDetailsTable)
   val ddl = specialtables.map(_.schema).reduce(_ ++ _)
 }
 

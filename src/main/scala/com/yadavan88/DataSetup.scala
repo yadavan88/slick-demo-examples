@@ -9,6 +9,7 @@ import scala.util.Success
 import scala.util.Failure
 import scala.concurrent.ExecutionContext
 import java.util.concurrent.Executors
+import play.api.libs.json.Json
 
 object MyExecContext {
   implicit val ec = ExecutionContext.fromExecutor(Executors.newWorkStealingPool(4))
@@ -92,5 +93,15 @@ object DataSetup {
   )
   val starTrekProperties = MovieProperties(0L, starTrekWrath.id, starTrekPropMap)
   val shawshankProperties = MovieProperties(0L, shawshank.id, shawshankMap)
+
+  val actorDetailsShatner = {
+    val json = Json.parse(""" {"born": "Canada", "birthYear":1931, "middleName": "Alan"} """) 
+    ActorDetails(0L, shatner.id, json)
+  }
+
+  val actorDetailsNemoy = {
+    val json = Json.parse(""" {"born": "USA", "birthYear":1931, "middleName": "Simon"} """) 
+    ActorDetails(0L, nemoy.id, json)
+  }
 
 }

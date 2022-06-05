@@ -31,8 +31,19 @@ object SpecialOperations {
   }
 
   def getMoviesByDistributor(distributor: String): Future[Seq[MovieProperties]] = {
-      val condition = Map("distributor" -> distributor)
-      val query = SpecialTables.moviePropertiesTable.filter(_.properties @> condition.bind)
-      Connection.db.run(query.result)
+    val condition = Map("distributor" -> distributor)
+    val query = SpecialTables.moviePropertiesTable.filter(_.properties @> condition.bind)
+    Connection.db.run(query.result)
   }
+
+  def saveActorDetails(actorDetails: ActorDetails): Future[Int] = {
+    Connection.db.run(SpecialTables.actorDetailsTable += actorDetails)
+  }
+
+  def getActorsBornOn(year: String): Future[Seq[ActorDetails]] = {
+    Connection.db.run(
+      SpecialTables.actorDetailsTable.filter(_.personal.+>>("birthYear") === year.bind).result
+    )
+  }
+
 }

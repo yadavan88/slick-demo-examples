@@ -27,6 +27,9 @@ object StepByStepApp extends App {
     _ <- SpecialOperations.saveMovieProperties(DataSetup.starTrekProperties)
     _ <- SpecialOperations.saveMovieProperties(DataSetup.shawshankProperties)
     _ <- SpecialOperations.getMoviesByDistributor("Columbia Pictures").debug
+    _ <- SpecialOperations.saveActorDetails(DataSetup.actorDetailsShatner)
+    _ <- SpecialOperations.saveActorDetails(DataSetup.actorDetailsNemoy)
+    _ <- SpecialOperations.getActorsBornOn("1931").debug
     _ = println("all done.... ")
   } yield ()
 
