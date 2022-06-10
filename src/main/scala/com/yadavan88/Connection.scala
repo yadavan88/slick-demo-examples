@@ -9,4 +9,5 @@ import slick.jdbc.PostgresProfile
 object Connection {
   import SlickTables.profile.api._
   val db: SlickTables.profile.backend.DatabaseDef = Database.forConfig("postgres")
+  // val db = Database.forConfig("databaseUrl")
 }
