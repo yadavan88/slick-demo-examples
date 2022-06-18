@@ -17,7 +17,6 @@ libraryDependencies ++= Seq(
 //Slick Code Generation 
 slickCodegenSettings
 enablePlugins(CodegenPlugin)
-//sourceGenerators in Compile += slickCodegen
 slickCodegenDatabaseUrl := "jdbc:postgresql://localhost:5432/movies"
 slickCodegenDatabaseUser := "postgres"
 slickCodegenDatabasePassword := "admin"
@@ -28,4 +27,5 @@ slickCodegenCodeGenerator := { (slickModel: model.Model) => new SourceCodeGenera
 
 //slickCodegenIncludedTables in Compile := Seq("users") //: this will filter only thee provided tables for generation
 
+//sourceGenerators in Compile += slickCodegen
 //run the command `slickCodegen` to generate code

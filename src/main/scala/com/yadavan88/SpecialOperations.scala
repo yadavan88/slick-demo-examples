@@ -19,10 +19,10 @@ object SpecialOperations {
     Connection.db.run(joinQuerry.result).map(_.map(_._2))
   }
 
-  def getMoviesFilmedInLocations(location: List[String]) = {
+  def getMoviesFilmedInLocations(locations: List[String]) = {
     // NOTE: Make sure the implicit exists for List[String], otherwise it will cause error.
     // implicit for List will not match for Seq, but reverse is true
-    val q = SpecialTables.movieLocationsTable.filter(_.locations @& location.bind)
+    val q = SpecialTables.movieLocationsTable.filter(_.locations @& locations.bind)
     Connection.db.run(q.result)
   }
 
