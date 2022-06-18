@@ -1,1 +1,2 @@
 # slick-demo
+Slick examples
